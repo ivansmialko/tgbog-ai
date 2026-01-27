@@ -1,0 +1,13 @@
+{
+  "version": "0.2.1",
+  "defaults": {},
+  "configurations": [
+    {
+      "type": "default",
+      "project": "CMakeLists.txt",
+      "projectTarget": "tgbot-ai.exe",
+      "name": "tgbot-ai.exe",
+      "workingDirectory": "${workspaceRoot}"
+    }
+  ]
+}
