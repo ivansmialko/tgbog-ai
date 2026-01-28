@@ -1,5 +1,5 @@
 #pragma once
-#include <string>
+#include "pch.hpp"
 #include <vector>
 #include "dto/DataModels.hpp"
 
@@ -17,5 +17,6 @@ namespace clients
 		std::string ask(const std::string& in_prompt);
 		std::string ask(const std::vector<data_models::ChatMessage>& in_history);
 		void setSystemPrompt(const std::string& in_system_prompt);
+		bool checkApiKey();
 	};
 }

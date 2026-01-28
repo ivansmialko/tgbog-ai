@@ -29,3 +29,8 @@ void db::DataStorage::saveModelReponse(int64_t in_tg_chat_id, int64_t in_tg_thre
 
 	_db->saveMessage(topic._id, { "model", in_response });
 }
+
+bool db::DataStorage::isAvailable()
+{
+	return _db->checkHealth();
+}

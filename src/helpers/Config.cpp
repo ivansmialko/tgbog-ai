@@ -1,7 +1,7 @@
 #include "helpers/Config.hpp"
 #include <fstream>
 #include <iostream>
-#include <algorithm>
+#include <logging/Logger.hpp>
 
 namespace helpers
 {
@@ -15,7 +15,7 @@ namespace helpers
 		std::ifstream file(in_filename);
 		if (!file.is_open())
 		{
-			std::cerr << "[Config] Error: Could not open " << in_filename << std::endl;
+			LOG_ERR("Unable to load {} file.", in_filename);
 			return;
 		}
 

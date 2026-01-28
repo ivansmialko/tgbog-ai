@@ -128,6 +128,28 @@ std::vector<data_models::ChatMessage> db::SQLite3DB::getChatHistory(int in_topic
 	return history;
 }
 
+bool db::SQLite3DB::checkHealth()
+{
+	const char* sql = "PRAGMA integrity_check;";
+	sqlite3_stmt* stmt;
+
+	if (sqlite3_prepare_v2(_db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+		return false;
+	}
+
+	bool isOk = false;
+	if (sqlite3_step(stmt) == SQLITE_ROW) {
+		if (const unsigned char* result = sqlite3_column_text(stmt, 0);
+			result != nullptr && std::string(reinterpret_cast<const char*>(result)) == "ok")
+		{
+			isOk = true;
+		}
+	}
+
+	sqlite3_finalize(stmt);
+	return isOk;
+}
+
 void db::SQLite3DB::createTables()
 {
 	std::string sql =

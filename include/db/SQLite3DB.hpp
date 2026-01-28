@@ -18,6 +18,8 @@ namespace db
 		void saveMessage(int in_topic_id, const data_models::ChatMessage& msg);
 		std::vector<data_models::ChatMessage> getChatHistory(int in_topic_id, size_t in_limit = 10);
 
+		bool checkHealth();
+
 	private:
 		sqlite3* _db{ nullptr };
 		void createTables();

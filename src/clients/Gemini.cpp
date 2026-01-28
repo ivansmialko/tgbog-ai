@@ -1,13 +1,11 @@
 #include "clients/Gemini.hpp"
 #include <curl/curl.h>
-#include <nlohmann/json.hpp>
 #include <fstream>
 #include <iostream>
 
 void debugJson(const nlohmann::json& j) {
 	std::ofstream file("debug_request.json");
 	if (file.is_open()) {
-		// Параметр 4 додає гарні відступи (pretty print)
 		file << j.dump(4);
 		file.close();
 		std::cout << "JSON saved to debug_request.json" << std::endl;
@@ -110,5 +108,27 @@ std::string clients::GeminiClient::ask(const std::vector<data_models::ChatMessag
 void clients::GeminiClient::setSystemPrompt(const std::string& in_system_prompt)
 {
 	_system_prompt = in_system_prompt;
+}
+
+bool clients::GeminiClient::checkApiKey()
+{
+	CURL* curl = curl_easy_init();
+	long http_code = 0;
+
+	if (curl) {
+		std::string url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash?key=" + _api_key;
+
+		curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+		curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
+
+		CURLcode res = curl_easy_perform(curl);
+		if (res == CURLE_OK) {
+			curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+		}
+
+		curl_easy_cleanup(curl);
+	}
+
+	return http_code == 200;
 }
 
