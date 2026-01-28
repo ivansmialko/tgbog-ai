@@ -18,6 +18,38 @@ size_t clients::GeminiClient::writeCallback(void* in_contents, size_t in_size, s
 	return in_size * in_nmemb;
 }
 
+void clients::GeminiClient::cleanUpJsonChunk(std::string& in_json)
+{
+	size_t first_brace = in_json.find('{');
+
+	if (first_brace == std::string::npos) {
+		if (in_json.find_first_of("], \r\t") != std::string::npos) {
+			in_json.clear();
+		}
+		return;
+	}
+
+	in_json.erase(0, first_brace);
+
+	size_t last_brace = in_json.rfind('}');
+	if (last_brace != std::string::npos) {
+		in_json.erase(last_brace + 1);
+	}
+}
+
+nlohmann::json clients::GeminiClient::chatHistoryToJson(const std::vector<data_models::ChatMessage>& in_history) const
+{
+	nlohmann::json contents = nlohmann::json::array();
+	for (const auto& message : in_history)
+	{
+		contents.push_back({
+				{"role", message._role},
+				{"parts", {{{"text", message._content}}}} });
+	}
+
+	return contents;
+}
+
 std::string clients::GeminiClient::ask(const std::string& in_prompt)
 {
 	CURL* curl = curl_easy_init();
@@ -53,7 +85,69 @@ std::string clients::GeminiClient::ask(const std::string& in_prompt)
 
 void clients::GeminiClient::askStream(const std::vector<data_models::ChatMessage>& in_history, OnStreamChunk in_chunk_dlg)
 {
+	CURL* curl = curl_easy_init();
+	if (!curl)
+		return;
 
+	std::string api_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?key=" + _api_key;
+
+	nlohmann::json json_body;
+	json_body["system_instruction"]["parts"]["text"] = _system_prompt;
+	json_body["contents"] = chatHistoryToJson(in_history);
+
+	struct curl_slist* headers{ nullptr };
+	headers = curl_slist_append(headers, "Content-Type: application/json");
+
+	auto curl_write_function = [](char* in_ptr, size_t in_size, size_t in_nmemb, void* in_user_data)
+	{
+		auto* callback_ptr = static_cast<OnStreamChunk*>(in_user_data);
+		if (!callback_ptr || !(*callback_ptr))
+			return in_size * in_nmemb;
+		
+		std::string buffer(in_ptr, in_size * in_nmemb);
+		cleanUpJsonChunk(buffer);
+
+		if(buffer.empty())
+			return in_size * in_nmemb;
+
+		try
+		{
+			auto json_chunk = nlohmann::json::parse(buffer);
+			if (!json_chunk.contains("candidates"))
+				return in_size * in_nmemb;
+
+			if (json_chunk["candidates"].empty())
+				return in_size * in_nmemb;
+
+			std::string text_chunk = json_chunk["candidates"][0]["content"]["parts"][0]["text"];
+			LOG_INFO(text_chunk);
+			(*callback_ptr)(text_chunk);
+		}
+		catch (std::exception& e)
+		{
+			LOG_WARN("Failed to parse json chunk");
+		}
+
+		return in_size * in_nmemb;
+	};
+
+	std::string request_data = json_body.dump();
+
+	curl_easy_setopt(curl, CURLOPT_URL, api_url.c_str());
+	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+	curl_easy_setopt(curl, CURLOPT_POST, 1L);
+	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, request_data.c_str());
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, +curl_write_function);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &in_chunk_dlg);
+
+	CURLcode res = curl_easy_perform(curl);
+	if (res != CURLE_OK)
+	{
+		LOG_WARN("Stream request failed: {}", std::string(curl_easy_strerror(res)));
+	}
+
+	curl_slist_free_all(headers);
+	curl_easy_cleanup(curl);
 }
 
 std::string clients::GeminiClient::ask(const std::vector<data_models::ChatMessage>& in_history)
@@ -67,15 +161,7 @@ std::string clients::GeminiClient::ask(const std::vector<data_models::ChatMessag
 
 	nlohmann::json json_body;
 	json_body["system_instruction"]["parts"]["text"] = _system_prompt;
-
-	nlohmann::json contents = nlohmann::json::array();
-	for (const auto& message : in_history)
-	{
-		contents.push_back({
-				{"role", message._role},
-				{"parts", {{{"text", message._content}}}} });
-	}
-	json_body["contents"] = contents;
+	json_body["contents"] = chatHistoryToJson(in_history);
 
 	std::string request_data = json_body.dump();
 	std::string response_data;

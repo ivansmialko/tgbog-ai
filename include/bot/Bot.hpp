@@ -13,6 +13,7 @@ namespace tgbot_ai
 		std::unique_ptr<clients::AiClient> _ai_client;
 		std::unique_ptr<db::DataStorage> _storage;
 		std::unique_ptr<TgBot::Bot> _bot;
+		std::string _username;
 
 		bool initEnvConfig();
 		bool initAiClient();
@@ -20,6 +21,8 @@ namespace tgbot_ai
 		bool initTgBot();
 
 		void tgOnAnyMessage(TgBot::Message::Ptr in_message);
+
+		void streamReply(TgBot::Message::Ptr in_message);
 
 	public:
 		bool init();

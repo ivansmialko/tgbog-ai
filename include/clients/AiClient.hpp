@@ -12,6 +12,8 @@ namespace clients
 		std::string _api_key;
 		std::string _system_prompt;
 
+		virtual nlohmann::json chatHistoryToJson(const std::vector<data_models::ChatMessage>& in_history) const = 0;
+
 	public:
 		virtual ~AiClient() = default;
 

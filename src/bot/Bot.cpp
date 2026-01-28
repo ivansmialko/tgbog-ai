@@ -61,6 +61,8 @@ bool tgbot_ai::BotAi::initTgBot()
 	}
 
 	_bot = std::make_unique<TgBot::Bot>(tg_token);
+	_username = _bot->getApi().getMe()->username;
+
 	return true;
 }
 
@@ -86,23 +88,91 @@ void tgbot_ai::BotAi::tgOnAnyMessage(TgBot::Message::Ptr in_message)
 	if (in_message->text.empty())
 		return;
 
+	LOG_INFO("Received message from chat_id {}: {}", in_message->chat->id, in_message->text);
+
+	bool isGroup = (in_message->chat->type == TgBot::Chat::Type::Group ||
+		in_message->chat->type == TgBot::Chat::Type::Supergroup);
+
+	if (isGroup)
+	{
+		std::string mention = "@" + _username;
+		if (in_message->text.find(mention) == std::string::npos)
+			return;
+	}
+
+	//auto history = _storage->getUserContext(
+	//	in_message->chat->id,
+	//	in_message->messageThreadId,
+	//	(in_message->chat->title.empty() ? in_message->chat->firstName : in_message->chat->title),
+	//	"private",
+	//	in_message->text);
+
+	//std::string ai_response = _ai_client->ask(history);
+	//_storage->saveModelReponse(in_message->chat->id, in_message->messageThreadId, ai_response);
+
+	//auto replyParams = std::make_shared<TgBot::ReplyParameters>();
+	//replyParams->messageId = in_message->messageId;
+	//replyParams->chatId = in_message->chat->id;
+
+	//_bot->getApi().sendMessage(in_message->chat->id, ai_response, nullptr, replyParams, std::make_shared<TgBot::GenericReply>(), "HTML");
+	streamReply(in_message);
+
+	LOG_INFO("Processed message from chat_id {}: {}", in_message->chat->id, in_message->text);
+}
+
+void tgbot_ai::BotAi::streamReply(TgBot::Message::Ptr in_message)
+{
+	if (!_ai_client)
+		return;
+
+	if (!_bot)
+		return;
+
+	_bot->getApi().sendChatAction(in_message->chat->id, "typing");
+
+	std::string full_response;
+	auto last_update = std::chrono::steady_clock::now();
+	int32_t sent_message_id = 0;
+	int64_t tg_chat_id = in_message->chat->id;
+
 	auto history = _storage->getUserContext(
-		in_message->chat->id,
+		tg_chat_id,
 		in_message->messageThreadId,
 		(in_message->chat->title.empty() ? in_message->chat->firstName : in_message->chat->title),
 		"private",
 		in_message->text);
 
-	std::string ai_response = _ai_client->ask(history);
-	_storage->saveModelReponse(in_message->chat->id, in_message->messageThreadId, ai_response);
+	_ai_client->askStream(history, [this, tg_chat_id, &sent_message_id, &full_response, &last_update](const std::string& in_chunk)
+	{
+		full_response += in_chunk;
 
-	auto replyParams = std::make_shared<TgBot::ReplyParameters>();
-	replyParams->messageId = in_message->messageId;
-	replyParams->chatId = in_message->chat->id;
+		auto now = std::chrono::steady_clock::now();
+		auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_update).count();
 
-	_bot->getApi().sendMessage(in_message->chat->id, ai_response, nullptr, replyParams, std::make_shared<TgBot::GenericReply>(), "HTML");
+		if (sent_message_id == 0)
+		{
+			auto msg = _bot->getApi().sendMessage(tg_chat_id, full_response + "|", false, 0, nullptr, "HTML");
+			sent_message_id = msg->messageId;
+			last_update = now;
+		}
+		else if (diff > 500)
+		{
+			try
+			{
+				_bot->getApi().editMessageText(full_response + "|", tg_chat_id, sent_message_id);
+				last_update = now;
+			}
+			catch (const std::exception& e)
+			{
+				LOG_ERR("Edit error: {}", std::string(e.what()));
+			}
+		}
+	});
 
-	LOG_INFO("Processed message from chat_id {}: {}", in_message->chat->id, in_message->text);
+	if (full_response.empty() || sent_message_id == 0)
+		return;
+
+	_bot->getApi().editMessageText(full_response, tg_chat_id, sent_message_id);
 }
 
 void tgbot_ai::BotAi::start()
@@ -117,6 +187,7 @@ void tgbot_ai::BotAi::start()
 	try
 	{
 		TgBot::TgLongPoll long_poll((*_bot));
+		LOG_INFO("Bot started");
 		while (true)
 		{
 			long_poll.start();

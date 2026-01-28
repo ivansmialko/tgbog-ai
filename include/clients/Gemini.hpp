@@ -10,6 +10,10 @@ namespace clients
 	{
 	private:
 		static size_t writeCallback(void* in_contents, size_t in_size, size_t in_nmemb, void* out_userp);
+		static void cleanUpJsonChunk(std::string& in_json);
+
+	protected:
+		virtual nlohmann::json chatHistoryToJson(const std::vector<data_models::ChatMessage>& in_history) const override;
 
 	public:
 		virtual std::string ask(const std::string& in_prompt) override;
