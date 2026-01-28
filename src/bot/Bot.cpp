@@ -24,10 +24,11 @@ bool tgbot_ai::BotAi::initAiClient()
 		return false;
 	}
 
-	_ai_client = std::make_unique<clients::GeminiClient>(_env_config->get("API_KEY"));
+	_ai_client = std::make_unique<clients::GeminiClient>(api_key);
 	if (!_ai_client->checkApiKey())
 	{
 		LOG_ERR("GEMINI_KEY is invalid.");
+		return false;
 	}
 
 	std::string system_prompt = _env_config->get("SYSTEM_PROMPT");
@@ -57,8 +58,7 @@ bool tgbot_ai::BotAi::initTgBot()
 		return false;
 	}
 
-	TgBot::Bot bot(tg_token);
-
+	_bot = std::make_unique<TgBot::Bot>(tg_token);
 	return true;
 }
 
@@ -99,6 +99,8 @@ void tgbot_ai::BotAi::tgOnAnyMessage(TgBot::Message::Ptr in_message)
 	replyParams->chatId = in_message->chat->id;
 
 	_bot->getApi().sendMessage(in_message->chat->id, ai_response, nullptr, replyParams, std::make_shared<TgBot::GenericReply>(), "HTML");
+
+	LOG_INFO("Processed message from chat_id {}: {}", in_message->chat->id, in_message->text);
 }
 
 void tgbot_ai::BotAi::start()

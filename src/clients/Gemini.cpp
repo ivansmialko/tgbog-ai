@@ -77,8 +77,6 @@ std::string clients::GeminiClient::ask(const std::vector<data_models::ChatMessag
 	}
 	json_body["contents"] = contents;
 
-	debugJson(json_body);
-
 	std::string request_data = json_body.dump();
 	std::string response_data;
 
@@ -97,7 +95,6 @@ std::string clients::GeminiClient::ask(const std::vector<data_models::ChatMessag
 
 	try {
 		auto json_res = nlohmann::json::parse(response_data);
-		debugJson(json_res);
 		return json_res["candidates"][0]["content"]["parts"][0]["text"];
 	}
 	catch (...) {
@@ -116,10 +113,14 @@ bool clients::GeminiClient::checkApiKey()
 	long http_code = 0;
 
 	if (curl) {
-		std::string url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash?key=" + _api_key;
+		std::string url = "https://generativelanguage.googleapis.com/v1beta/models?key=" + _api_key;
 
 		curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-		curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
+		curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
+		curl_easy_setopt(curl, CURLOPT_NOBODY, 0L);
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, +[](void*, size_t size, size_t nmemb, void*) {
+			return size * nmemb; // Просто ігноруємо дані
+		});
 
 		CURLcode res = curl_easy_perform(curl);
 		if (res == CURLE_OK) {
