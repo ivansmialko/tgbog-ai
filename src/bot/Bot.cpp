@@ -130,7 +130,7 @@ void tgbot_ai::BotAi::streamReply(TgBot::Message::Ptr in_message)
 
 	_bot->getApi().sendChatAction(in_message->chat->id, "typing");
 
-	bool isGroup = (in_message->chat->type == TgBot::Chat::Type::Group ||
+	bool is_group = (in_message->chat->type == TgBot::Chat::Type::Group ||
 		in_message->chat->type == TgBot::Chat::Type::Supergroup);
 
 	std::string full_response;
@@ -146,7 +146,7 @@ void tgbot_ai::BotAi::streamReply(TgBot::Message::Ptr in_message)
 		"private",
 		in_message->text);
 
-	_ai_client->askStream(history, [this, tg_chat_id, &sent_message_id, &full_response, &last_update, &isGroup, &request_msg_id](const std::string& in_chunk)
+	_ai_client->askStream(history, [this, tg_chat_id, &sent_message_id, &full_response, &last_update, &is_group, &request_msg_id](const std::string& in_chunk)
 	{
 		full_response += in_chunk;
 
@@ -155,28 +155,24 @@ void tgbot_ai::BotAi::streamReply(TgBot::Message::Ptr in_message)
 
 		if (sent_message_id == 0)
 		{
-			if (isGroup)
-			{
-				auto reply_params = std::make_shared<TgBot::ReplyParameters>();
-				reply_params->messageId = request_msg_id;
-				reply_params->chatId = tg_chat_id;
-				reply_params->allowSendingWithoutReply = true;
+			auto reply_params = std::make_shared<TgBot::ReplyParameters>();
+			reply_params->messageId = request_msg_id;
+			reply_params->chatId = tg_chat_id;
+			reply_params->allowSendingWithoutReply = true;
 
-				auto msg = _bot->getApi().sendMessage(
-					tg_chat_id,
-					full_response + "|",
-					nullptr, reply_params,
-					nullptr, "HTML"
-				);
-				sent_message_id = msg->messageId;
-				last_update = now;
-			}
-			else
-			{
-				auto msg = _bot->getApi().sendMessage(tg_chat_id, full_response + "|", false, 0, nullptr, "HTML");
-				sent_message_id = msg->messageId;
-				last_update = now;
-			}
+			TgBot::ReplyParameters::Ptr current_reply = is_group ? reply_params : nullptr;
+
+			auto msg = _bot->getApi().sendMessage(
+				tg_chat_id,
+				full_response + "|",
+				nullptr,
+				current_reply,
+				nullptr,
+				"HTML"
+			);
+
+			sent_message_id = msg->messageId;
+			last_update = now;
 		}
 		else if (diff > 500)
 		{
