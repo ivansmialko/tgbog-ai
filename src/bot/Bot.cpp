@@ -1,4 +1,5 @@
 #include "bot/Bot.hpp"
+#include "clients/Gemini.hpp"
 
 bool tgbot_ai::BotAi::initEnvConfig()
 {
@@ -24,7 +25,8 @@ bool tgbot_ai::BotAi::initAiClient()
 		return false;
 	}
 
-	_ai_client = std::make_unique<clients::GeminiClient>(api_key);
+	_ai_client = std::make_unique<clients::GeminiClient>();
+	_ai_client->setApiKey(api_key);
 	if (!_ai_client->checkApiKey())
 	{
 		LOG_ERR("GEMINI_KEY is invalid.");

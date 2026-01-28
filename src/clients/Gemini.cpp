@@ -18,11 +18,6 @@ size_t clients::GeminiClient::writeCallback(void* in_contents, size_t in_size, s
 	return in_size * in_nmemb;
 }
 
-clients::GeminiClient::GeminiClient(const std::string& in_api_key)
-	: _api_key(in_api_key)
-{
-}
-
 std::string clients::GeminiClient::ask(const std::string& in_prompt)
 {
 	CURL* curl = curl_easy_init();
@@ -54,6 +49,11 @@ std::string clients::GeminiClient::ask(const std::string& in_prompt)
 
 	auto response_json = nlohmann::json::parse(response);
 	return response_json["candidates"][0]["content"]["parts"][0]["text"];
+}
+
+void clients::GeminiClient::askStream(const std::vector<data_models::ChatMessage>& in_history, OnStreamChunk in_chunk_dlg)
+{
+
 }
 
 std::string clients::GeminiClient::ask(const std::vector<data_models::ChatMessage>& in_history)
@@ -102,11 +102,6 @@ std::string clients::GeminiClient::ask(const std::vector<data_models::ChatMessag
 	}
 }
 
-void clients::GeminiClient::setSystemPrompt(const std::string& in_system_prompt)
-{
-	_system_prompt = in_system_prompt;
-}
-
 bool clients::GeminiClient::checkApiKey()
 {
 	CURL* curl = curl_easy_init();
@@ -132,4 +127,3 @@ bool clients::GeminiClient::checkApiKey()
 
 	return http_code == 200;
 }
-

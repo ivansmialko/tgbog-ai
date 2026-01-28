@@ -2,21 +2,20 @@
 #include "pch.hpp"
 #include <vector>
 #include "dto/DataModels.hpp"
+#include "AiClient.hpp"
 
 namespace clients
 {
-	class GeminiClient
+	class GeminiClient : public clients::AiClient
 	{
 	private:
-		std::string _api_key;
-		std::string _system_prompt;
 		static size_t writeCallback(void* in_contents, size_t in_size, size_t in_nmemb, void* out_userp);
 
 	public:
-		explicit GeminiClient(const std::string& in_api_key);
-		std::string ask(const std::string& in_prompt);
-		std::string ask(const std::vector<data_models::ChatMessage>& in_history);
-		void setSystemPrompt(const std::string& in_system_prompt);
-		bool checkApiKey();
+		virtual std::string ask(const std::string& in_prompt) override;
+		virtual std::string ask(const std::vector<data_models::ChatMessage>& in_history) override;
+		virtual void askStream(const std::vector<data_models::ChatMessage>& in_history, OnStreamChunk in_chunk_dlg);
+
+		virtual bool checkApiKey() override;
 	};
 }

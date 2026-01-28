@@ -1,7 +1,7 @@
 #pragma once
 #include "pch.hpp"
 #include "helpers/Config.hpp"
-#include "clients/Gemini.hpp"
+#include "clients/AiClient.hpp"
 #include "db/DataStorage.hpp"
 
 namespace tgbot_ai
@@ -10,7 +10,7 @@ namespace tgbot_ai
 	{
 	private:
 		std::unique_ptr<helpers::Config> _env_config;
-		std::unique_ptr<clients::GeminiClient> _ai_client;
+		std::unique_ptr<clients::AiClient> _ai_client;
 		std::unique_ptr<db::DataStorage> _storage;
 		std::unique_ptr<TgBot::Bot> _bot;
 
