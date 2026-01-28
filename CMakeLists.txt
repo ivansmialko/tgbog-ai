@@ -21,7 +21,7 @@ add_executable(${PROJECT_NAME} "main.cpp" ${SOURCES} ${HEADERS})
 target_include_directories(${PROJECT_NAME} PRIVATE include)
 target_precompile_headers(${PROJECT_NAME} PRIVATE "include/pch.hpp")
 
-target_link_libraries(${PROJECT_NAME} PRIVATE TgBot::TgBot)
+target_link_libraries(${PROJECT_NAME} PRIVATE tgbot)
 target_link_libraries(${PROJECT_NAME} PRIVATE CURL::libcurl)
 target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json)
 target_link_libraries(${PROJECT_NAME} PRIVATE unofficial::sqlite3::sqlite3)
