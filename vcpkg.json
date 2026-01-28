@@ -1,0 +1,11 @@
+{
+  "name": "tgbot-ai",
+  "version-string": "0.1.0",
+  "dependencies": [
+    "fmt",
+    "nlohmann-json",
+    "curl",
+    "sqlite3",
+    "tgbot-cpp"
+  ]
+}
