@@ -162,7 +162,12 @@ void tgbot_ai::BotAi::streamReply(TgBot::Message::Ptr in_message)
 				reply_params->chatId = tg_chat_id;
 				reply_params->allowSendingWithoutReply = true;
 
-				auto msg = _bot->getApi().sendMessage(tg_chat_id, full_response + "|", false, reply_params, nullptr, "HTML");
+				auto msg = _bot->getApi().sendMessage(
+					tg_chat_id,
+					full_response + "|",
+					nullptr, reply_params,
+					nullptr, "HTML"
+				);
 				sent_message_id = msg->messageId;
 				last_update = now;
 			}
