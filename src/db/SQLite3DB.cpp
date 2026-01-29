@@ -56,8 +56,10 @@ void db::SQLite3DB::insertUser(UINT64 in_tg_user_id, const std::string& in_name,
 		"ON CONFLICT(tg_user_id) DO UPDATE SET name=excluded.name, nickname=excluded.nickname;";
 
 	sqlite3_stmt* stmt;
-	if (sqlite3_prepare_v2(_db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
+	if (sqlite3_prepare_v2(_db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+		LOG_ERR("SQL Error: {}", sqlite3_errmsg(_db)); // Виведе причину в консоль
 		return;
+	}
 
 	sqlite3_bind_int64(stmt, 1, in_tg_user_id);
 	sqlite3_bind_text(stmt, 2, in_name.c_str(), -1, SQLITE_TRANSIENT);
@@ -249,9 +251,9 @@ void db::SQLite3DB::createTables()
 {
 	std::string create_users_sql = "CREATE TABLE IF NOT EXISTS users ("
 		"id INTEGER PRIMARY KEY, "
-		"tg_user_id INTEGER, "
+		"tg_user_id INTEGER UNIQUE, "
 		"name TEXT, "
-		"nickname TEXT";
+		"nickname TEXT);";
 	execute(create_users_sql);
 
 	std::string chats_create_sql = "CREATE TABLE IF NOT EXISTS chats ("
