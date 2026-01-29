@@ -1,6 +1,7 @@
 #pragma once
 #include <functional>
 #include "dto/DataModels.hpp"
+#include "db/UserContext.hpp"
 
 namespace clients
 {
@@ -18,8 +19,8 @@ namespace clients
 		virtual ~AiClient() = default;
 
 		virtual std::string ask(const std::string& in_prompt) = 0;
-		virtual std::string ask(const std::vector<data_models::ChatMessage>& in_history) = 0;
-		virtual void askStream(const std::vector<data_models::ChatMessage>& in_history, OnStreamChunk in_chunk_dlg) = 0;
+		virtual std::string ask(const db::UserContext& in_context) = 0;
+		virtual void askStream(const db::UserContext& in_context, OnStreamChunk in_chunk_dlg) = 0;
 
 		virtual bool checkApiKey() = 0;
 		void setSystemPrompt(const std::string& in_system_prompt) { _system_prompt = in_system_prompt; }

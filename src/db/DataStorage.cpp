@@ -5,7 +5,17 @@ db::DataStorage::DataStorage(const std::string& in_db_path):
 {
 }
 
-std::vector<data_models::ChatMessage> db::DataStorage::getUserContext(int64_t in_tg_chat_id,
+db::UserContext db::DataStorage::getUserContext(const db::MessageData& in_msg_data)
+{
+	db::UserContext user_context;
+	user_context._chat_data = _db->getOrCreateChat(in_msg_data._tg_chat_id);
+	user_context._topic_data = _db->getOrCreateTopic(in_msg_data._tg_thread_id);
+	user_context._chat_history = _db->getChatHistory(in_msg_data._tg_chat_id, in_msg_data._tg_thread_id);
+
+	return user_context;
+}
+
+std::vector<data_models::ChatMessage> db::DataStorage::getChatHistory(int64_t in_tg_chat_id,
 	int64_t in_tg_thread_id,
 	const std::string& in_chat_title,
 	const std::string& in_chat_type,

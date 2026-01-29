@@ -1,4 +1,5 @@
 #include "bot/Bot.hpp"
+#include "db/MessageData.hpp"
 #include "clients/Gemini.hpp"
 
 bool tgbot_ai::BotAi::initEnvConfig()
@@ -139,12 +140,15 @@ void tgbot_ai::BotAi::streamReply(TgBot::Message::Ptr in_message)
 	int64_t tg_chat_id = in_message->chat->id;
 	int32_t request_msg_id = in_message->messageId;
 
-	auto history = _storage->getUserContext(
-		tg_chat_id,
+	db::MessageData msg_data{
+		static_cast<int>(tg_chat_id),
 		in_message->messageThreadId,
 		(in_message->chat->title.empty() ? in_message->chat->firstName : in_message->chat->title),
 		"private",
-		in_message->text);
+		in_message->text
+	};
+
+	db::UserContext user_context = _storage->getUserContext(msg_data);
 
 	_ai_client->askStream(history, [this, tg_chat_id, &sent_message_id, &full_response, &last_update, &is_group, &request_msg_id](const std::string& in_chunk)
 	{
@@ -190,6 +194,8 @@ void tgbot_ai::BotAi::streamReply(TgBot::Message::Ptr in_message)
 
 	if (full_response.empty() || sent_message_id == 0)
 		return;
+
+	_storage->saveModelReponse(tg_chat_id, in_message->messageThreadId, full_response);
 
 	_bot->getApi().editMessageText(full_response, tg_chat_id, sent_message_id);
 }

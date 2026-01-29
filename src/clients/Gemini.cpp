@@ -83,7 +83,7 @@ std::string clients::GeminiClient::ask(const std::string& in_prompt)
 	return response_json["candidates"][0]["content"]["parts"][0]["text"];
 }
 
-void clients::GeminiClient::askStream(const std::vector<data_models::ChatMessage>& in_history, OnStreamChunk in_chunk_dlg)
+void clients::GeminiClient::askStream(const db::UserContext& in_context, OnStreamChunk in_chunk_dlg)
 {
 	CURL* curl = curl_easy_init();
 	if (!curl)
@@ -93,7 +93,7 @@ void clients::GeminiClient::askStream(const std::vector<data_models::ChatMessage
 
 	nlohmann::json json_body;
 	json_body["system_instruction"]["parts"]["text"] = _system_prompt;
-	json_body["contents"] = chatHistoryToJson(in_history);
+	json_body["contents"] = chatHistoryToJson(in_context._chat_history);
 
 	struct curl_slist* headers{ nullptr };
 	headers = curl_slist_append(headers, "Content-Type: application/json");
@@ -150,7 +150,7 @@ void clients::GeminiClient::askStream(const std::vector<data_models::ChatMessage
 	curl_easy_cleanup(curl);
 }
 
-std::string clients::GeminiClient::ask(const std::vector<data_models::ChatMessage>& in_history)
+std::string clients::GeminiClient::ask(const db::UserContext& in_context)
 {
 	CURL* curl = curl_easy_init();
 
@@ -161,7 +161,7 @@ std::string clients::GeminiClient::ask(const std::vector<data_models::ChatMessag
 
 	nlohmann::json json_body;
 	json_body["system_instruction"]["parts"]["text"] = _system_prompt;
-	json_body["contents"] = chatHistoryToJson(in_history);
+	json_body["contents"] = chatHistoryToJson(in_context._chat_history);
 
 	std::string request_data = json_body.dump();
 	std::string response_data;

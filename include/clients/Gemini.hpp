@@ -17,8 +17,8 @@ namespace clients
 
 	public:
 		virtual std::string ask(const std::string& in_prompt) override;
-		virtual std::string ask(const std::vector<data_models::ChatMessage>& in_history) override;
-		virtual void askStream(const std::vector<data_models::ChatMessage>& in_history, OnStreamChunk in_chunk_dlg);
+		virtual std::string ask(const db::UserContext& in_context) override;
+		virtual void askStream(const db::UserContext& in_context, OnStreamChunk in_chunk_dlg);
 
 		virtual bool checkApiKey() override;
 	};

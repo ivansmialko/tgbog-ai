@@ -26,10 +26,4 @@ namespace data_models
 		std::string _role;
 		std::string _content;
 	};
-
-	struct ChatSession
-	{
-		Topic topic;
-		std::vector<ChatMessage> history;
-	};
 }
