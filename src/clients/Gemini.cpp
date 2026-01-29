@@ -3,15 +3,6 @@
 #include <fstream>
 #include <iostream>
 
-void debugJson(const nlohmann::json& j) {
-	std::ofstream file("debug_request.json");
-	if (file.is_open()) {
-		file << j.dump(4);
-		file.close();
-		std::cout << "JSON saved to debug_request.json" << std::endl;
-	}
-}
-
 size_t clients::GeminiClient::writeCallback(void* in_contents, size_t in_size, size_t in_nmemb, void* out_userp)
 {
 	static_cast<std::string*>(out_userp)->append(static_cast<char*>(in_contents), in_size * in_nmemb);
@@ -35,19 +26,6 @@ void clients::GeminiClient::cleanUpJsonChunk(std::string& in_json)
 	if (last_brace != std::string::npos) {
 		in_json.erase(last_brace + 1);
 	}
-}
-
-nlohmann::json clients::GeminiClient::chatHistoryToJson(const std::vector<data_models::ChatMessage>& in_history) const
-{
-	nlohmann::json contents = nlohmann::json::array();
-	for (const auto& message : in_history)
-	{
-		contents.push_back({
-				{"role", message._role},
-				{"parts", {{{"text", message._content}}}} });
-	}
-
-	return contents;
 }
 
 std::string clients::GeminiClient::ask(const std::string& in_prompt)
@@ -83,7 +61,7 @@ std::string clients::GeminiClient::ask(const std::string& in_prompt)
 	return response_json["candidates"][0]["content"]["parts"][0]["text"];
 }
 
-void clients::GeminiClient::askStream(const db::UserContext& in_context, OnStreamChunk in_chunk_dlg)
+void clients::GeminiClient::askStream(const model_context::ModelContext& in_context, OnStreamChunk in_chunk_dlg)
 {
 	CURL* curl = curl_easy_init();
 	if (!curl)
@@ -93,7 +71,7 @@ void clients::GeminiClient::askStream(const db::UserContext& in_context, OnStrea
 
 	nlohmann::json json_body;
 	json_body["system_instruction"]["parts"]["text"] = _system_prompt;
-	json_body["contents"] = chatHistoryToJson(in_context._chat_history);
+	json_body["contents"] = in_context.toJson();
 
 	struct curl_slist* headers{ nullptr };
 	headers = curl_slist_append(headers, "Content-Type: application/json");
@@ -103,11 +81,11 @@ void clients::GeminiClient::askStream(const db::UserContext& in_context, OnStrea
 		auto* callback_ptr = static_cast<OnStreamChunk*>(in_user_data);
 		if (!callback_ptr || !(*callback_ptr))
 			return in_size * in_nmemb;
-		
+
 		std::string buffer(in_ptr, in_size * in_nmemb);
 		cleanUpJsonChunk(buffer);
 
-		if(buffer.empty())
+		if (buffer.empty())
 			return in_size * in_nmemb;
 
 		try
@@ -150,7 +128,7 @@ void clients::GeminiClient::askStream(const db::UserContext& in_context, OnStrea
 	curl_easy_cleanup(curl);
 }
 
-std::string clients::GeminiClient::ask(const db::UserContext& in_context)
+std::string clients::GeminiClient::ask(const model_context::ModelContext& in_context)
 {
 	CURL* curl = curl_easy_init();
 
@@ -161,13 +139,13 @@ std::string clients::GeminiClient::ask(const db::UserContext& in_context)
 
 	nlohmann::json json_body;
 	json_body["system_instruction"]["parts"]["text"] = _system_prompt;
-	json_body["contents"] = chatHistoryToJson(in_context._chat_history);
+	json_body["contents"] = in_context.toJson();
 
 	std::string request_data = json_body.dump();
 	std::string response_data;
 
 	curl_easy_setopt(curl, CURLOPT_URL, api_url.c_str());
-	curl_easy_setopt(curl , CURLOPT_POSTFIELDS, request_data.c_str());
+	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, request_data.c_str());
 
 	struct curl_slist* headers{ nullptr };
 	headers = curl_slist_append(headers, "Content-Type: application/json");

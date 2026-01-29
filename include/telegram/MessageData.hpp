@@ -1,6 +1,6 @@
 #pragma once
 
-namespace db
+namespace tg
 {
 	struct MessageData
 	{
