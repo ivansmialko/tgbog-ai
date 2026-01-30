@@ -20,8 +20,8 @@ db::SQLite3DB::~SQLite3DB()
 	sqlite3_close(_db);
 }
 
-void db::SQLite3DB::insertMessage(int64_t in_tg_chat_id, uint64_t_t in_tg_thread_id, uint64_t_t in_tg_user_id,
-	uint64_t_t in_tg_msg_id, std::string in_role, const std::string& in_content)
+void db::SQLite3DB::insertMessage(int64_t in_tg_chat_id, uint64_t in_tg_thread_id, uint64_t in_tg_user_id,
+	uint64_t in_tg_msg_id, std::string in_role, const std::string& in_content)
 {
 	std::string sql =
 		"INSERT INTO messages (thread_id, chat_id, user_id, tg_msg_id, content, role, timestamp) "
@@ -37,11 +37,11 @@ void db::SQLite3DB::insertMessage(int64_t in_tg_chat_id, uint64_t_t in_tg_thread
 		return;
 	}
 
-	sqlite3_bind_int64_t(stmt, 1, in_tg_thread_id);
-	sqlite3_bind_int64_t(stmt, 2, in_tg_chat_id);
-	sqlite3_bind_int64_t(stmt, 3, in_tg_user_id);
+	sqlite3_bind_int64(stmt, 1, in_tg_thread_id);
+	sqlite3_bind_int64(stmt, 2, in_tg_chat_id);
+	sqlite3_bind_int64(stmt, 3, in_tg_user_id);
 
-	sqlite3_bind_int64_t(stmt, 4, in_tg_msg_id);
+	sqlite3_bind_int64(stmt, 4, in_tg_msg_id);
 	sqlite3_bind_text(stmt, 5, in_content.c_str(), -1, SQLITE_TRANSIENT);
 	sqlite3_bind_text(stmt, 6, in_role.c_str(), -1, SQLITE_TRANSIENT);
 
@@ -50,7 +50,7 @@ void db::SQLite3DB::insertMessage(int64_t in_tg_chat_id, uint64_t_t in_tg_thread
 	sqlite3_finalize(stmt);
 }
 
-void db::SQLite3DB::insertUser(uint64_t_t in_tg_user_id, const std::string& in_name, const std::string& in_nickname)
+void db::SQLite3DB::insertUser(uint64_t in_tg_user_id, const std::string& in_name, const std::string& in_nickname)
 {
 	std::string sql = "INSERT INTO users (tg_user_id, name, nickname) VALUES (?, ?, ?) "
 		"ON CONFLICT(tg_user_id) DO UPDATE SET name=excluded.name, nickname=excluded.nickname;";
@@ -61,7 +61,7 @@ void db::SQLite3DB::insertUser(uint64_t_t in_tg_user_id, const std::string& in_n
 		return;
 	}
 
-	sqlite3_bind_int64_t(stmt, 1, in_tg_user_id);
+	sqlite3_bind_int64(stmt, 1, in_tg_user_id);
 	sqlite3_bind_text(stmt, 2, in_name.c_str(), -1, SQLITE_TRANSIENT);
 	sqlite3_bind_text(stmt, 3, in_nickname.c_str(), -1, SQLITE_TRANSIENT);
 
@@ -77,14 +77,14 @@ void db::SQLite3DB::insertChat(int64_t in_tg_chat_id, const std::string& in_name
 	if (sqlite3_prepare_v2(_db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
 		return;
 
-	sqlite3_bind_int64_t(stmt, 1, in_tg_chat_id);
+	sqlite3_bind_int64(stmt, 1, in_tg_chat_id);
 	sqlite3_bind_text(stmt, 2, in_name.c_str(), -1, SQLITE_TRANSIENT);
 	sqlite3_bind_text(stmt, 3, in_type.c_str(), -1, SQLITE_TRANSIENT);
 
 	sqlite3_step(stmt);
 }
 
-void db::SQLite3DB::insertThread(uint64_t_t in_tg_thread_id, int64_t in_tg_chat_id, const std::string& in_name)
+void db::SQLite3DB::insertThread(uint64_t in_tg_thread_id, int64_t in_tg_chat_id, const std::string& in_name)
 {
 	std::string sql = "INSERT INTO threads (tg_thread_id, chat_id, name) VALUES ("
 		"?, (SELECT id FROM chats WHERE tg_chat_id = ?), ?) "
@@ -94,8 +94,8 @@ void db::SQLite3DB::insertThread(uint64_t_t in_tg_thread_id, int64_t in_tg_chat_
 	if (sqlite3_prepare_v2(_db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
 		return;
 
-	sqlite3_bind_int64_t(stmt, 1, in_tg_thread_id);
-	sqlite3_bind_int64_t(stmt, 2, in_tg_chat_id);
+	sqlite3_bind_int64(stmt, 1, in_tg_thread_id);
+	sqlite3_bind_int64(stmt, 2, in_tg_chat_id);
 	sqlite3_bind_text(stmt, 3, in_name.c_str(), -1, SQLITE_TRANSIENT);
 	sqlite3_step(stmt);
 }
@@ -111,11 +111,11 @@ data_models::Chat db::SQLite3DB::getChat(int64_t in_tg_chat_id)
 	if (sqlite3_prepare_v2(_db, select_sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
 		return chat;
 
-	sqlite3_bind_int64_t(stmt, 1, in_tg_chat_id);
+	sqlite3_bind_int64(stmt, 1, in_tg_chat_id);
 
 	if (sqlite3_step(stmt) == SQLITE_ROW)
 	{
-		chat._id = sqlite3_column_int64_t(stmt, 0);
+		chat._id = sqlite3_column_int64(stmt, 0);
 
 		if (const unsigned char* name = sqlite3_column_text(stmt, 1); name != nullptr)
 		{
@@ -131,7 +131,7 @@ data_models::Chat db::SQLite3DB::getChat(int64_t in_tg_chat_id)
 	return chat;
 }
 
-data_models::User db::SQLite3DB::getUser(uint64_t_t in_tg_user_id)
+data_models::User db::SQLite3DB::getUser(uint64_t in_tg_user_id)
 {
 	data_models::User user;
 
@@ -142,11 +142,11 @@ data_models::User db::SQLite3DB::getUser(uint64_t_t in_tg_user_id)
 	if (sqlite3_prepare_v2(_db, select_sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
 		return user;
 
-	sqlite3_bind_int64_t(stmt, 1, in_tg_user_id);
+	sqlite3_bind_int64(stmt, 1, in_tg_user_id);
 
 	if (sqlite3_step(stmt) == SQLITE_ROW)
 	{
-		user._id = sqlite3_column_int64_t(stmt, 0);
+		user._id = sqlite3_column_int64(stmt, 0);
 
 		if (const unsigned char* name = sqlite3_column_text(stmt, 1); name != nullptr)
 		{
@@ -162,7 +162,7 @@ data_models::User db::SQLite3DB::getUser(uint64_t_t in_tg_user_id)
 	return user;
 }
 
-data_models::User db::SQLite3DB::getUserById(uint64_t_t in_user_id)
+data_models::User db::SQLite3DB::getUserById(uint64_t in_user_id)
 {
 	data_models::User user;
 	std::string select_sql = "SELECT id, name, nickname FROM users"
@@ -172,11 +172,11 @@ data_models::User db::SQLite3DB::getUserById(uint64_t_t in_user_id)
 	if (sqlite3_prepare_v2(_db, select_sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
 		return user;
 
-	sqlite3_bind_int64_t(stmt, 1, in_user_id);
+	sqlite3_bind_int64(stmt, 1, in_user_id);
 
 	if (sqlite3_step(stmt) == SQLITE_ROW)
 	{
-		user._id = sqlite3_column_int64_t(stmt, 0);
+		user._id = sqlite3_column_int64(stmt, 0);
 		if (const unsigned char* name = sqlite3_column_text(stmt, 1); name != nullptr)
 		{
 			user._name = reinterpret_cast<const char*>(name);
@@ -189,7 +189,7 @@ data_models::User db::SQLite3DB::getUserById(uint64_t_t in_user_id)
 	return user;
 }
 
-data_models::Thread db::SQLite3DB::getThread(uint64_t_t in_tg_thread_id, int64_t in_tg_chat_id)
+data_models::Thread db::SQLite3DB::getThread(uint64_t in_tg_thread_id, int64_t in_tg_chat_id)
 {
 	data_models::Thread thread;
 
@@ -200,12 +200,12 @@ data_models::Thread db::SQLite3DB::getThread(uint64_t_t in_tg_thread_id, int64_t
 	if (sqlite3_prepare_v2(_db, select_sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
 		return thread;
 
-	sqlite3_bind_int64_t(stmt, 1, in_tg_thread_id);
-	sqlite3_bind_int64_t(stmt, 2, in_tg_chat_id);
+	sqlite3_bind_int64(stmt, 1, in_tg_thread_id);
+	sqlite3_bind_int64(stmt, 2, in_tg_chat_id);
 
 	if (sqlite3_step(stmt) == SQLITE_ROW)
 	{
-		thread._id = sqlite3_column_int64_t(stmt, 0);
+		thread._id = sqlite3_column_int64(stmt, 0);
 
 		if (const unsigned char* name = sqlite3_column_text(stmt, 1); name != nullptr)
 		{
@@ -216,7 +216,7 @@ data_models::Thread db::SQLite3DB::getThread(uint64_t_t in_tg_thread_id, int64_t
 	return thread;
 }
 
-std::vector<data_models::Message> db::SQLite3DB::getMessages(uint64_t_t in_chat_id, uint64_t_t in_thread_id, uint64_t_t in_limit /*= 100*/)
+std::vector<data_models::Message> db::SQLite3DB::getMessages(uint64_t in_chat_id, uint64_t in_thread_id, uint64_t in_limit /*= 100*/)
 {
 	std::vector<data_models::Message> messages;
 	messages.reserve(in_limit);
@@ -231,8 +231,8 @@ std::vector<data_models::Message> db::SQLite3DB::getMessages(uint64_t_t in_chat_
 		return messages;
 	}
 
-	sqlite3_bind_int64_t(stmt, 1, in_chat_id);
-	sqlite3_bind_int64_t(stmt, 2, in_limit);
+	sqlite3_bind_int64(stmt, 1, in_chat_id);
+	sqlite3_bind_int64(stmt, 2, in_limit);
 	while (sqlite3_step(stmt) == SQLITE_ROW)
 	{
 		data_models::Message new_message;
@@ -246,9 +246,9 @@ std::vector<data_models::Message> db::SQLite3DB::getMessages(uint64_t_t in_chat_
 			new_message._role = reinterpret_cast<const char*>(role);
 		}
 
-		new_message._timestamp = sqlite3_column_int64_t(stmt, 2);
-		new_message._tg_msg_id = sqlite3_column_int64_t(stmt, 3);
-		new_message._user_id = sqlite3_column_int64_t(stmt, 4);
+		new_message._timestamp = sqlite3_column_int64(stmt, 2);
+		new_message._tg_msg_id = sqlite3_column_int64(stmt, 3);
+		new_message._user_id = sqlite3_column_int64(stmt, 4);
 		messages.push_back(std::move(new_message));
 	}
 

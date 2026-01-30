@@ -7,7 +7,7 @@ namespace data_models
 {
 	struct User
 	{
-		uint64_t_t _id;
+		uint64_t _id;
 		std::string _name;
 		std::string _nickname;
 
@@ -16,7 +16,7 @@ namespace data_models
 
 	struct Chat
 	{
-		uint64_t_t _id;
+		uint64_t _id;
 		std::string _name;
 		std::string _type;
 
@@ -25,7 +25,7 @@ namespace data_models
 
 	struct Thread
 	{
-		uint64_t_t _id;
+		uint64_t _id;
 		std::string _name;
 
 		bool isEmpty() { return _name.empty(); }
@@ -33,12 +33,12 @@ namespace data_models
 
 	struct Message
 	{
-		uint64_t_t _id;
+		uint64_t _id;
 		std::string _content;
 		std::string _role;
-		uint64_t_t _timestamp;
-		uint64_t_t _tg_msg_id;
-		uint64_t_t _user_id;
+		uint64_t _timestamp;
+		uint64_t _tg_msg_id;
+		uint64_t _user_id;
 
 		bool isEmpty() { return _content.empty() && _role.empty(); }
 	};
