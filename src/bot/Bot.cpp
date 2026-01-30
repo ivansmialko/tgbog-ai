@@ -144,8 +144,8 @@ void tgbot_ai::BotAi::streamReply(TgBot::Message::Ptr in_message)
 
 	std::string full_response;
 	auto last_update = std::chrono::steady_clock::now();
-	uint64_t sent_message_id = 0;
-	uint64_t request_msg_id = static_cast<uint64_t>(in_message->messageId);
+	uint64_t_t sent_message_id = 0;
+	uint64_t_t request_msg_id = static_cast<uint64_t_t>(in_message->messageId);
 
 	tg::MessageData msg_data;
 	msg_data._chat_name = in_message->chat->title.empty() ? in_message->chat->username : in_message->chat->title;
