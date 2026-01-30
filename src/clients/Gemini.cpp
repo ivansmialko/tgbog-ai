@@ -71,6 +71,12 @@ void clients::GeminiClient::askStream(const model_context::ModelContext& in_cont
 
 	nlohmann::json json_body;
 	json_body["system_instruction"]["parts"]["text"] = _system_prompt + ". Here's the chat overview: " + in_context.getJsonChatOverview().dump();
+	json_body["safetySettings"] = {
+		{{"category", "HARM_CATEGORY_HARASSMENT"}, {"threshold", "BLOCK_NONE"}},
+		{{"category", "HARM_CATEGORY_HATE_SPEECH"}, {"threshold", "BLOCK_NONE"}},
+		{{"category", "HARM_CATEGORY_SEXUALLY_EXPLICIT"}, {"threshold", "BLOCK_NONE"}},
+		{{"category", "HARM_CATEGORY_DANGEROUS_CONTENT"}, {"threshold", "BLOCK_NONE"}}
+	};
 	json_body["contents"] = in_context.getJsonHistory();
 
 	struct curl_slist* headers{ nullptr };
@@ -139,6 +145,12 @@ std::string clients::GeminiClient::ask(const model_context::ModelContext& in_con
 
 	nlohmann::json json_body;
 	json_body["system_instruction"]["parts"]["text"] = _system_prompt + ". Here's the chat overview: " + in_context.getJsonChatOverview().dump();
+	json_body["safetySettings"] = {
+	{{"category", "HARM_CATEGORY_HARASSMENT"}, {"threshold", "BLOCK_NONE"}},
+	{{"category", "HARM_CATEGORY_HATE_SPEECH"}, {"threshold", "BLOCK_NONE"}},
+	{{"category", "HARM_CATEGORY_SEXUALLY_EXPLICIT"}, {"threshold", "BLOCK_NONE"}},
+	{{"category", "HARM_CATEGORY_DANGEROUS_CONTENT"}, {"threshold", "BLOCK_NONE"}}
+	};
 	json_body["contents"] = in_context.getJsonHistory();
 
 	std::string request_data = json_body.dump();
@@ -159,6 +171,12 @@ std::string clients::GeminiClient::ask(const model_context::ModelContext& in_con
 
 	try {
 		auto json_res = nlohmann::json::parse(response_data);
+		std::ofstream file("debug_response.json");
+		if (file.is_open()) {
+			file << json_res.dump(4);
+			file.close();
+			std::cout << "JSON response saved to debug_response.json" << std::endl;
+		}
 		return json_res["candidates"][0]["content"]["parts"][0]["text"];
 	}
 	catch (...) {
