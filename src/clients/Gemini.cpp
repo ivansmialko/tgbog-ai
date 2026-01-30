@@ -70,8 +70,8 @@ void clients::GeminiClient::askStream(const model_context::ModelContext& in_cont
 	std::string api_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?key=" + _api_key;
 
 	nlohmann::json json_body;
-	json_body["system_instruction"]["parts"]["text"] = _system_prompt;
-	json_body["contents"] = in_context.toJson();
+	json_body["system_instruction"]["parts"]["text"] = _system_prompt + ". Here's the chat overview: " + in_context.getJsonChatOverview().dump();
+	json_body["contents"] = in_context.getJsonHistory();
 
 	struct curl_slist* headers{ nullptr };
 	headers = curl_slist_append(headers, "Content-Type: application/json");
@@ -138,8 +138,8 @@ std::string clients::GeminiClient::ask(const model_context::ModelContext& in_con
 	std::string api_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + _api_key;
 
 	nlohmann::json json_body;
-	json_body["system_instruction"]["parts"]["text"] = _system_prompt;
-	json_body["contents"] = in_context.toJson();
+	json_body["system_instruction"]["parts"]["text"] = _system_prompt + ". Here's the chat overview: " + in_context.getJsonChatOverview().dump();
+	json_body["contents"] = in_context.getJsonHistory();
 
 	std::string request_data = json_body.dump();
 	std::string response_data;

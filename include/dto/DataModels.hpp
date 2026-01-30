@@ -36,8 +36,9 @@ namespace data_models
 		UINT64 _id;
 		std::string _content;
 		std::string _role;
-		UINT32 _timestamp;
-		UINT32 _tg_msg_id;
+		UINT64 _timestamp;
+		UINT64 _tg_msg_id;
+		UINT64 _user_id;
 
 		bool isEmpty() { return _content.empty() && _role.empty(); }
 	};

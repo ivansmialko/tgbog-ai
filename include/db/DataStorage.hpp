@@ -17,7 +17,7 @@ namespace db
 		explicit DataStorage(const std::string& in_db_path);
 
 		model_context::ModelContext getModelContext(const tg::MessageData& in_msg_data);
-		//void saveModelReponse(int64_t in_tg_chat_id, int64_t in_tg_thread_id, const std::string& in_response);
+		void saveMessage(const tg::MessageData& in_msg_data);
 
 		bool isAvailable();
 	};

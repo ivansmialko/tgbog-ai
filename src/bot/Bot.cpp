@@ -108,7 +108,20 @@ void tgbot_ai::BotAi::tgOnAnyMessage(TgBot::Message::Ptr in_message)
 	{
 		std::string mention = "@" + _username;
 		if (in_message->text.find(mention) == std::string::npos)
+		{
+			tg::MessageData msg_data;
+			msg_data._chat_name = in_message->chat->title.empty() ? in_message->chat->username : in_message->chat->title;
+			msg_data._chat_type = isGroup ? "group" : "private";
+			msg_data._message_text = in_message->text;
+			msg_data._tg_chat_id = in_message->chat->id;
+			msg_data._tg_thread_id = in_message->messageThreadId;
+			msg_data._tg_user_id = in_message->from->id;
+			msg_data._tg_msg_id = in_message->messageId;
+			msg_data._role = "user";
+			msg_data._nickname = in_message->from->username.empty() ? in_message->from->firstName : in_message->from->username;
+			_storage->saveMessage(msg_data);
 			return;
+		}
 	}
 
 	streamReply(in_message);
@@ -131,21 +144,40 @@ void tgbot_ai::BotAi::streamReply(TgBot::Message::Ptr in_message)
 
 	std::string full_response;
 	auto last_update = std::chrono::steady_clock::now();
-	int32_t sent_message_id = 0;
-	int64_t tg_chat_id = in_message->chat->id;
-	int32_t request_msg_id = in_message->messageId;
+	UINT64 sent_message_id = 0;
+	UINT64 request_msg_id = static_cast<UINT64>(in_message->messageId);
 
-	tg::MessageData msg_data{
-		static_cast<int>(tg_chat_id),
-		in_message->messageThreadId,
-		(in_message->chat->title.empty() ? in_message->chat->firstName : in_message->chat->title),
-		"private",
-		in_message->text
-	};
+	tg::MessageData msg_data;
+	msg_data._chat_name = in_message->chat->title.empty() ? in_message->chat->username : in_message->chat->title;
+	msg_data._chat_type = is_group ? "group" : "private";
+	msg_data._message_text = in_message->text;
+	msg_data._tg_chat_id = in_message->chat->id;
+	msg_data._tg_thread_id = in_message->messageThreadId;
+	msg_data._tg_user_id = in_message->from->id;
+	msg_data._tg_msg_id = in_message->messageId;
+	msg_data._role = "user";
+	msg_data._nickname = in_message->from->username.empty() ? in_message->from->firstName : in_message->from->username;
 
-	model_context::ModelContext user_context = _storage->getModelContext(msg_data);
-	debugJson(user_context.toJson());
+	_storage->saveMessage(msg_data);
 
+	model_context::ModelContext model_context = _storage->getModelContext(msg_data);
+	debugJson(model_context.getJsonHistory());
+
+	std::string response = _ai_client->ask(model_context);
+	auto sent_message = _bot->getApi().sendMessage(in_message->chat->id, response);
+	
+	tg::MessageData sent_msg_data;
+	msg_data._chat_name = sent_message->chat->title.empty() ? in_message->chat->username : sent_message->chat->title;
+	sent_msg_data._chat_type = is_group ? "group" : "private";
+	sent_msg_data._message_text = sent_message->text;
+	sent_msg_data._tg_chat_id = sent_message->chat->id;
+	sent_msg_data._tg_thread_id = sent_message->messageThreadId;
+	sent_msg_data._tg_user_id = _bot->getApi().getMe()->id;
+	sent_msg_data._tg_msg_id = sent_message->messageId;
+	sent_msg_data._role = "model";
+	sent_msg_data._nickname = _bot->getApi().getMe()->username;
+
+	_storage->saveMessage(sent_msg_data);
 
 	//_ai_client->askStream(history, [this, tg_chat_id, &sent_message_id, &full_response, &last_update, &is_group, &request_msg_id](const std::string& in_chunk)
 	//{
